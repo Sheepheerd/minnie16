@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,7 +41,8 @@ void cpu_step(CPU *cpu, BUS *bus, int debug) {
     cpu->reg[inst.rd] = cpu->reg[inst.r.rs1] - cpu->reg[inst.r.rs2];
     break;
   case OP_ADDI:
-    cpu->reg[inst.rd] = cpu->reg[inst.i.rb] + inst.i.imm;
+    cpu->reg[inst.rd] =
+        cpu->reg[inst.i.rb] + (int8_t)((int8_t)(inst.i.imm << 4) >> 4);
     break;
   case OP_AND:
     cpu->reg[inst.rd] = cpu->reg[inst.r.rs1] & cpu->reg[inst.r.rs2];
@@ -48,9 +50,11 @@ void cpu_step(CPU *cpu, BUS *bus, int debug) {
   case OP_OR:
     cpu->reg[inst.rd] = cpu->reg[inst.r.rs1] | cpu->reg[inst.r.rs2];
     break;
-  case OP_SLL:
-    cpu->reg[inst.rd] = cpu->reg[inst.r.rs1] << cpu->reg[inst.r.rs2];
+  case OP_SLL: {
+    uint16_t amt = cpu->reg[inst.r.rs2];
+    cpu->reg[inst.rd] = amt >= 16 ? 0 : (uint16_t)(cpu->reg[inst.r.rs1] << amt);
     break;
+  }
   case OP_SLT:
     cpu->reg[inst.rd] = cpu->reg[inst.r.rs1] < cpu->reg[inst.r.rs2];
     break;
@@ -69,10 +73,12 @@ void cpu_step(CPU *cpu, BUS *bus, int debug) {
     break;
   }
   case OP_LIL:
-    cpu->reg[inst.rd] = inst.l.imm;
+    cpu->reg[inst.rd] = inst.l.imm & 0xFF;
     break;
   case OP_LIH:
-    cpu->reg[inst.rd] = (inst.l.imm << 8) | (cpu->reg[inst.rd] & 0x00FF);
+    cpu->reg[inst.rd] =
+        (((uint8_t)inst.l.imm) << 8) | (cpu->reg[inst.rd] & 0x00FF);
+    break;
   case OP_BEQZ:
     if (cpu->reg[inst.rd] == 0) {
       cpu->pc += (int8_t)inst.b.offset * 2;
@@ -84,13 +90,15 @@ void cpu_step(CPU *cpu, BUS *bus, int debug) {
     }
     break;
   case OP_JMP:
-    cpu->pc += inst.b.offset;
+    cpu->pc += (int8_t)inst.b.offset * 2;
 
     break;
-  case OP_JALR:
-    cpu->reg[inst.rd] = cpu->pc + 1; // return address = next instruction
-    cpu->pc = cpu->reg[inst.i.rb] & 0xFFFE;
+  case OP_JALR: {
+    uint16_t target = cpu->reg[inst.i.rb] & 0xFFFE;
+    cpu->reg[inst.rd] = cpu->pc;
+    cpu->pc = target;
     break;
+  }
   case OP_HALT:
     cpu->halted = 1;
     break;

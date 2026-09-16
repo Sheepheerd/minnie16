@@ -1,0 +1,6 @@
+[book]
+authors = ["Shepard Garrett"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Minnie16"

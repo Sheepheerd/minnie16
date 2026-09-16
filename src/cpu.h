@@ -7,7 +7,7 @@
 
 typedef struct {
   uint16_t pc; // Program Counter
-  uint16_t reg[15]; // Registers
+  uint16_t reg[16]; // Registers
   int halted; // Halt flag
 } CPU;
 
