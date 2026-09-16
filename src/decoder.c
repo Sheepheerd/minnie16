@@ -10,7 +10,6 @@ Format decode_format(uint16_t opcode) {
   case OP_OR:
   case OP_SLL:
   case OP_SLT:
-  case OP_HALT:
     return FMT_R;
 
   case OP_ADDI:
@@ -25,8 +24,13 @@ Format decode_format(uint16_t opcode) {
 
   case OP_BEQZ:
   case OP_BNEZ:
-  case OP_JMP:
     return FMT_B;
+
+  case OP_JAL:
+    return FMT_J;
+
+  case OP_EXT:
+    return FMT_X;
 
   default:
     fprintf(stderr, "illegal opcode: 0x%X\n", opcode);
@@ -58,6 +62,15 @@ Instruction decode(uint16_t raw) {
 
   case FMT_B:
     inst.b.offset = (int8_t)(raw & 0xFF);
+    break;
+
+  case FMT_J:
+    inst.j.offset = (int16_t)(((raw & 0xFFF) ^ 0x800) - 0x800);
+    break;
+
+  case FMT_X:
+    inst.x.rs = (raw >> 4) & 0xF;
+    inst.x.funct = raw & 0xF;
     break;
   }
 

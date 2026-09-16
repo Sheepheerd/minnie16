@@ -25,6 +25,11 @@ void cpu_step(CPU *cpu, BUS *bus, int debug) {
   if (inst.fmt == FMT_B) {
     printf("Decoded: op=%d, rd=%d, offset=%d\n", inst.op, inst.rd,
            inst.b.offset);
+  } else if (inst.fmt == FMT_J) {
+    printf("Decoded: op=%d, offset=%d\n", inst.op, inst.j.offset);
+  } else if (inst.fmt == FMT_X) {
+    printf("Decoded: op=%d, rd=%d, rs=%d, funct=%d\n", inst.op, inst.rd,
+           inst.x.rs, inst.x.funct);
   } else if (inst.fmt == FMT_I) {
     printf("Decoded: op=%d, rd=%d, rb=%d, imm=%d\n", inst.op, inst.rd,
            inst.i.rb, inst.i.imm);
@@ -59,17 +64,15 @@ void cpu_step(CPU *cpu, BUS *bus, int debug) {
     cpu->reg[inst.rd] = cpu->reg[inst.r.rs1] < cpu->reg[inst.r.rs2];
     break;
   case OP_LW: {
-
-    uint16_t base = cpu->reg[inst.i.rb];
-    uint16_t offset = inst.i.imm & 0xf;
-    cpu->reg[inst.rd] = bus_read(bus, base + offset);
+    // Offset counts words: 0 to 15 words is 0 to 30 bytes
+    uint16_t addr = cpu->reg[inst.i.rb] + inst.i.imm * 2;
+    cpu->reg[inst.rd] = bus_read(bus, addr);
     break;
   }
   case OP_SW: {
-    uint16_t base = cpu->reg[inst.i.rb];
-    uint16_t offset = inst.i.imm & 0xf;
+    uint16_t addr = cpu->reg[inst.i.rb] + inst.i.imm * 2;
     uint16_t data = cpu->reg[inst.rd]; // rd holds source data for SW
-    bus_write(bus, base + offset, data);
+    bus_write(bus, addr, data);
     break;
   }
   case OP_LIL:
@@ -89,19 +92,57 @@ void cpu_step(CPU *cpu, BUS *bus, int debug) {
       cpu->pc += (int8_t)inst.b.offset * 2;
     }
     break;
-  case OP_JMP:
-    cpu->pc += (int8_t)inst.b.offset * 2;
-
-    break;
   case OP_JALR: {
     uint16_t target = cpu->reg[inst.i.rb] & 0xFFFE;
     cpu->reg[inst.rd] = cpu->pc;
     cpu->pc = target;
     break;
   }
-  case OP_HALT:
-    cpu->halted = 1;
+  case OP_JAL:
+    cpu->reg[15] = cpu->pc; // r15 is the link register
+    cpu->pc += inst.j.offset * 2;
     break;
+  case OP_EXT: {
+    uint16_t a = cpu->reg[inst.rd];
+    uint16_t b = cpu->reg[inst.x.rs];
+
+    switch (inst.x.funct) {
+    case FN_HALT:
+      cpu->halted = 1;
+      break;
+    case FN_XOR:
+      cpu->reg[inst.rd] = a ^ b;
+      break;
+    case FN_SRL:
+      cpu->reg[inst.rd] = b >= 16 ? 0 : a >> b;
+      break;
+    case FN_SRA: {
+      // Shift the complement so the result stays portable for negative values
+      uint16_t amt = b >= 16 ? 15 : b;
+      if (a & 0x8000) {
+        cpu->reg[inst.rd] = (uint16_t)~((uint16_t)~a >> amt);
+      } else {
+        cpu->reg[inst.rd] = a >> amt;
+      }
+      break;
+    }
+    case FN_SLTS:
+      cpu->reg[inst.rd] = (a ^ 0x8000) < (b ^ 0x8000);
+      break;
+    case FN_LB:
+      cpu->reg[inst.rd] = bus_read8(bus, b);
+      break;
+    case FN_SB:
+      bus_write8(bus, b, a & 0xFF); // rd holds source data for SB
+      break;
+    default:
+      fprintf(stderr, "illegal EXT funct: 0x%X at PC: 0x%04X\n", inst.x.funct,
+              old_pc);
+      cpu->halted = 1;
+      break;
+    }
+    break;
+  }
   default:
     break;
   }

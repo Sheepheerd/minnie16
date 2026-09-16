@@ -21,6 +21,12 @@ void bus_write(BUS *bus, uint16_t addr, uint16_t data) {
   bus->ram[addr + 1] = (uint8_t)((data >> 8) & 0xFF); // MSB at upper address
 }
 
+uint8_t bus_read8(BUS *bus, uint16_t addr) { return bus->ram[addr]; }
+
+void bus_write8(BUS *bus, uint16_t addr, uint8_t data) {
+  bus->ram[addr] = data;
+}
+
 int bus_load_program(BUS *bus, const char *filename) {
   FILE *file = fopen(filename, "rb");
   if (!file) {

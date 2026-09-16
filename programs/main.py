@@ -14,8 +14,16 @@ OP_LIH   = 0xA
 OP_BEQZ  = 0xB
 OP_BNEZ  = 0xC
 OP_JALR  = 0xD
-OP_JMP   = 0xE
-OP_HALT  = 0xF
+OP_JAL   = 0xE
+OP_EXT   = 0xF
+
+FN_HALT  = 0x0
+FN_XOR   = 0x1
+FN_SRL   = 0x2
+FN_SRA   = 0x3
+FN_SLTS  = 0x4
+FN_LB    = 0x5
+FN_SB    = 0x6
 
 instructions = [
     # r1 = 0 + 10
@@ -27,7 +35,7 @@ instructions = [
     (OP_SW << 12) | (1 << 8) | (2 << 4) | 0,
 
     # halt
-    (OP_HALT << 12),
+    (OP_EXT << 12) | FN_HALT,
 ]
 
 with open("program.bin", "wb") as f:

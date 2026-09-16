@@ -19,11 +19,22 @@ typedef enum {
   OP_BEQZ,
   OP_BNEZ,
   OP_JALR,
-  OP_JMP,
-  OP_HALT,
+  OP_JAL,
+  OP_EXT,
 } Opcode;
 
-typedef enum { FMT_R, FMT_I, FMT_L, FMT_B } Format;
+// OP_EXT function codes (low 4 bits)
+typedef enum {
+  FN_HALT,
+  FN_XOR,
+  FN_SRL,
+  FN_SRA,
+  FN_SLTS,
+  FN_LB,
+  FN_SB,
+} Funct;
+
+typedef enum { FMT_R, FMT_I, FMT_L, FMT_B, FMT_J, FMT_X } Format;
 
 typedef struct {
 
@@ -37,7 +48,7 @@ typedef struct {
     } r;
     struct {
       uint8_t rb;
-      int8_t imm; // imm4
+      int8_t imm; // imm4 (LW/SW: word offset, address = rb + imm4 * 2)
     } i;
     struct {
       int8_t imm; // imm8
@@ -45,6 +56,13 @@ typedef struct {
     struct {
       int8_t offset;
     } b;
+    struct {
+      int16_t offset; // offset12
+    } j;
+    struct {
+      uint8_t rs;
+      uint8_t funct;
+    } x;
   };
 
 } Instruction;
