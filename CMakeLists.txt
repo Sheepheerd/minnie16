@@ -7,7 +7,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_library(cpu16 STATIC
   src/cpu.c
-  src/alu.c
+  src/bus.c
+  src/decoder.c
 )
 target_include_directories(cpu16 PUBLIC src)
 

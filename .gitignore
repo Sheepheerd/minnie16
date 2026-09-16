@@ -2,6 +2,7 @@
 build/
 compile_commands.json
 .direnv/
+.cache
 
 
 # Prerequisites
