@@ -11,7 +11,7 @@ let
     "build/"
   ];
   filterSource = nix-gitignore.gitignoreSource additionalFilters;
-  cleanedSource = filterSource ../../.;
+  cleanedSource = filterSource ../.;
 in
 stdenv.mkDerivation {
   pname = "docs";

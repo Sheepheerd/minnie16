@@ -20,17 +20,35 @@
         "aarch64-darwin"
       ];
       localOverlay = import ./nix/overlay.nix;
-      forSystem = system: rec {
-        legacyPackages = import nixpkgs {
-          inherit system;
-          overlays = [ localOverlay ];
+      forSystem =
+        system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ localOverlay ];
+          };
+          serve = pkgs.writeShellApplication {
+            name = "docs-serve";
+            runtimeInputs = [ pkgs.mdbook ];
+            text = ''exec mdbook serve "$@"'';
+          };
+        in
+        {
+          legacyPackages = pkgs;
+          packages = {
+            inherit (pkgs) docs;
+            default = pkgs.docs;
+            inherit serve;
+          };
+          apps.serve = utils.lib.mkApp { drv = serve; };
+          apps.default = utils.lib.mkApp { drv = serve; };
+          devShells.default = pkgs.mkShell {
+            packages = with pkgs; [
+              mdbook
+              presenterm
+            ];
+          };
         };
-        packages = utils.lib.flattenTree {
-          inherit (legacyPackages) devShell docs;
-        };
-        defaultPackage = packages.docs;
-        apps.docs = utils.lib.mkApp { drv = packages.docs; };
-      };
     in
-    utils.lib.eachSystem systems forSystem // { overlay = localOverlay; };
+    utils.lib.eachSystem systems forSystem // { overlays.default = localOverlay; };
 }
