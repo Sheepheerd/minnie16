@@ -260,3 +260,12 @@ what that constraint forced:
 | Offsets scaled by 2 | double the reach, alignment by construction |
 | `EXT` escape hatch | seven more operations, at two operands each |
 
+
+<!-- end_slide -->
+
+
+What's Next
+===
+
+The cpu is working, however the process in writing the assembly is by hand. 
+The next presentation will go over writing the assembler.
