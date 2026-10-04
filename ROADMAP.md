@@ -3,7 +3,7 @@
 ## Order of Operations
 
 -[] Assembler
--[] Set by Step debugger
+-[] Step by Step debugger
 -[] MMIO
 -[] Visual Display
 -[] Web frontend with Console output

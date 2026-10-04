@@ -117,8 +117,8 @@ byte at `a`. All arithmetic wraps
 modulo 2<sup>16</sup>. `zext` means zero extend to 16 bits and `sext` means
 sign extend to 16 bits.
 
-The syntax column is the notation used in this book. There is no assembler
-yet, so programs are currently built by hand (see [Example program](#example-program)).
+The syntax column is the notation used in this book. The
+[assembler](./ch05-00-assembler.md) accepts the same syntax.
 
 ### Arithmetic and logic
 
@@ -198,7 +198,7 @@ counts **instructions**, relative to the next instruction. The range is −128 t
 +127 instructions.
 
 There is no separate unconditional jump. `r0` is always zero, so
-`BEQZ r0, offset` always branches. An assembler can provide `JMP offset` as an
+`BEQZ r0, offset` always branches. The assembler provides `JMP offset` as an
 alias for it.
 
 `JAL` calls a subroutine within ±2048 instructions. It saves the address of the
