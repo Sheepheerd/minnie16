@@ -17,8 +17,7 @@ The CPU works, but every program was built by hand:
 
 That line has a bug. `imm4` is signed, so `10` is really **−6**.
 
-Nobody noticed, because nothing was checking. An assembler is the thing that
-checks.
+An assembler is the thing that we need to check it.
 
 <!-- end_slide -->
 
@@ -43,7 +42,7 @@ Into this:
 
 <!-- pause -->
 
-One Python file. No dependencies. Around 150 lines.
+Python
 
 ```bash
 python3 tools/m16asm.py programs/example.asm
@@ -72,7 +71,6 @@ OPS = {
 <!-- pause -->
 
 Adding an instruction is one line, as long as it fits a format we already have.
-That is the six formats from the last talk paying off.
 
 <!-- end_slide -->
 
