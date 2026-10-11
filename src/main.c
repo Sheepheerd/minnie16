@@ -1,27 +1,43 @@
-#include <bus.h>
-#include <cpu.h>
+#include "cpu.h"
+#include "setup.h"
+#include "simulator.h"
+#include <getopt.h>
 #include <stdio.h>
 
-int main(void) {
+int main(int argc, char *argv[]) {
 
-  CPU *cpu = cpu_init();
-  BUS *bus = bus_init();
+  if (setup_opts(argc, argv) == 1) {
+    printf(
+        "Error: Couldn't parse correct arguments. Please use -h for usage\n");
+  };
 
-  if (!bus_load_program(bus, "program.bin")) {
-    return -1;
-  }
+  SIMULATOR *sim = sim_init();
 
-  while (!cpu->halted) {
-    cpu_step(cpu, bus, 1);
-  }
+  debug(sim);
 
-  // Debug the memeory
-  while (1) {
-    // ask the user what memeory address they want to see
-    printf("Enter memory address to view (hex): ");
-    int address;
-    scanf("%x", &address);
-    printf("Memory at 0x%04X: 0x%02X\n", address, bus_read(bus, address));
-  }
   return 0;
+}
+
+int setup_opts(int argc, char *argv[]) {
+  // Set up options
+  int debug = 0;
+
+  static struct option long_opts[] = {
+      {"debug", no_argument, 0, 'd'},
+  };
+
+  int opt;
+
+  while ((opt = getopt_long(argc, argv, "vo:c:h", long_opts, NULL)) != -1) {
+    switch (opt) {
+    case 'd':
+      debug = 1;
+      break;
+    case 'h':
+      printf("Usage: %s [--debug] [files...]\n", argv[0]);
+      return 0;
+    default:
+      return 1;
+    }
+  }
 }

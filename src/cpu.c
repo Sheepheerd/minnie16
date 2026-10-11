@@ -15,7 +15,7 @@ CPU *cpu_init() {
   return cpu;
 }
 
-void cpu_step(CPU *cpu, BUS *bus, int debug) {
+void cpu_step(CPU *cpu, BUS *bus) {
   uint16_t old_pc = cpu->pc;
   uint16_t raw = bus_read(bus, cpu->pc);
   Instruction inst = decode(raw);

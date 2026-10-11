@@ -13,6 +13,9 @@ typedef struct {
 
 CPU* cpu_init();
 
-void cpu_step(CPU *cpu, BUS *bus, int debug);
+void cpu_step(CPU *cpu, BUS *bus);
+
+int setup_opts(int argc, char *argv[]);
+
 
 #endif

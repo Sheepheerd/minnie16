@@ -9,6 +9,8 @@ add_library(cpu16 STATIC
   src/cpu.c
   src/bus.c
   src/decoder.c
+  src/simulator.c
+  src/debug.c
 )
 target_include_directories(cpu16 PUBLIC src)
 

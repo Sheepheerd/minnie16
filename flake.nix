@@ -31,17 +31,27 @@
 
         };
 
-        devShells.default = pkgs.mkShell {
-          packages = with pkgs; [
-            gcc
-            gdb
-            cmake
-            gnumake
-            pkg-config
-            clang-tools
-            # valgrind
-          ];
-        };
+        devShells.default =
+          let
+            masm = pkgs.writeShellScriptBin "masm" ''
+              exec ${pkgs.python3}/bin/python3 "${self}/tools/m16asm.py" "$@"
+
+            '';
+
+          in
+          pkgs.mkShell {
+            packages = with pkgs; [
+              gcc
+              gdb
+              cmake
+              gnumake
+              pkg-config
+              clang-tools
+              masm
+              python3
+              # valgrind
+            ];
+          };
       }
     );
 }

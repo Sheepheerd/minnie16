@@ -28,6 +28,7 @@ void bus_write8(BUS *bus, uint16_t addr, uint8_t data) {
 }
 
 int bus_load_program(BUS *bus, const char *filename) {
+  // TODO we need a verification that if it is not a correct file it won't load
   FILE *file = fopen(filename, "rb");
   if (!file) {
     return -1;
