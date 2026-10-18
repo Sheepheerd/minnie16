@@ -226,6 +226,9 @@ The emulator stops when it executes `HALT`, or when an instruction leaves the
 `pc` unchanged (for example `BEQZ r0, -1` or `JAL -1`). The encoding `0xF000` is the canonical
 `HALT`.
 
+After a halt, `pc` holds the address of the instruction that halted, not the
+one after it. A reserved `EXT` funct also halts, with an error message.
+
 ## Example program
 
 `programs/main.py` builds `program.bin`, which stores the value 10 at address
@@ -252,5 +255,8 @@ listed here so that programs do not depend on it by accident. Each item should
 be resolved either by fixing the emulator or by adopting it into the
 specification above.
 
-- **Reading or writing `0xFFFF`.** A word access at `0xFFFF` touches byte
-  `0x10000`, which is outside the 64 KiB `ram` array.
+There are no open items. Previously resolved:
+
+- **Reading or writing `0xFFFF`.** A word access at `0xFFFF` used to touch
+  byte `0x10000`, outside the 64 KiB `ram` array. The high byte now wraps
+  around to `0x0000`, so the address space is a ring.

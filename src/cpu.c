@@ -9,34 +9,26 @@
 
 CPU *cpu_init() {
   CPU *cpu = (CPU *)malloc(sizeof(CPU));
+  if (cpu == NULL) {
+    return NULL;
+  }
+  cpu_reset(cpu);
+  return cpu;
+}
+
+void cpu_reset(CPU *cpu) {
   cpu->pc = 0;
   cpu->halted = 0;
+  cpu->cycles = 0;
   memset(cpu->reg, 0, sizeof(cpu->reg));
-  return cpu;
 }
 
 void cpu_step(CPU *cpu, BUS *bus) {
   uint16_t old_pc = cpu->pc;
   uint16_t raw = bus_read(bus, cpu->pc);
   Instruction inst = decode(raw);
-  cpu->reg[0] = 0;
   cpu->pc += 2;
-
-  if (inst.fmt == FMT_B) {
-    printf("Decoded: op=%d, rd=%d, offset=%d\n", inst.op, inst.rd,
-           inst.b.offset);
-  } else if (inst.fmt == FMT_J) {
-    printf("Decoded: op=%d, offset=%d\n", inst.op, inst.j.offset);
-  } else if (inst.fmt == FMT_X) {
-    printf("Decoded: op=%d, rd=%d, rs=%d, funct=%d\n", inst.op, inst.rd,
-           inst.x.rs, inst.x.funct);
-  } else if (inst.fmt == FMT_I) {
-    printf("Decoded: op=%d, rd=%d, rb=%d, imm=%d\n", inst.op, inst.rd,
-           inst.i.rb, inst.i.imm);
-  } else {
-    printf("Decoded: op=%d, rd=%d, rs1=%d, rs2=%d\n", inst.op, inst.rd,
-           inst.r.rs1, inst.r.rs2);
-  }
+  cpu->cycles++;
 
   switch (inst.op) {
   case OP_ADD:
@@ -108,6 +100,7 @@ void cpu_step(CPU *cpu, BUS *bus) {
 
     switch (inst.x.funct) {
     case FN_HALT:
+      cpu->pc = old_pc; // Stay on the HALT so it shows where we stopped
       cpu->halted = 1;
       break;
     case FN_XOR:
@@ -138,6 +131,7 @@ void cpu_step(CPU *cpu, BUS *bus) {
     default:
       fprintf(stderr, "illegal EXT funct: 0x%X at PC: 0x%04X\n", inst.x.funct,
               old_pc);
+      cpu->pc = old_pc;
       cpu->halted = 1;
       break;
     }
@@ -147,8 +141,11 @@ void cpu_step(CPU *cpu, BUS *bus) {
     break;
   }
 
+  // r0 is hardwired to zero, so throw away anything written to it
+  cpu->reg[0] = 0;
+
+  // A jump to itself can never make progress, treat it as a halt
   if (cpu->pc == old_pc) {
-    printf("CPU cleanly halted on self-loop at PC: 0x%04X\n", old_pc);
     cpu->halted = 1;
   }
 }

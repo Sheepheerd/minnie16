@@ -217,10 +217,11 @@ Press `ctrl+e` to assemble and run it:
 
 ```bash +exec
 cd "$(git rev-parse --show-toplevel)"
-python3 tools/m16asm.py programs/fib.asm build/program.bin
-cd build
-printf "%x\n" $(seq 256 2 274) | ./minnie | grep -m 10 Memory |
-  while read -r line; do echo "fib[$((i++))] = $((${line##* }))"; done
+cmake -B build -S . >/dev/null && cmake --build build >/dev/null
+python3 tools/m16asm.py programs/fib.asm build/program.bin >/dev/null
+printf 'continue\nmem 0x100 20\n' | build/minnie -d build/program.bin |
+  awk '/^0x01/ { for (i = 2; i < NF; i += 2) print strtonum("0x" $(i+1) $i) }' |
+  while read -r v; do echo "fib[$((n++))] = $v"; done
 ```
 
 <!-- reset_layout -->

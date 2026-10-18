@@ -8,7 +8,13 @@ python3 tools/m16asm.py programs/example.asm            # writes program.bin
 python3 tools/m16asm.py programs/example.asm out.bin    # pick the output name
 ```
 
-The emulator loads `program.bin` from the directory it is started in.
+The emulator takes the program as an argument, and falls back to `program.bin`
+in the current directory:
+
+```text
+./build/minnie out.bin       # run to HALT, then print the registers
+./build/minnie -d out.bin    # step through it in the debugger
+```
 
 ## Source format
 
