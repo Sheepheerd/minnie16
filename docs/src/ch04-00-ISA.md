@@ -28,7 +28,8 @@ and branches test a register against zero (`BEQZ`, `BNEZ`).
 - Program images are loaded as raw bytes starting at address `0x0000`, and
   execution starts there.
 
-There is no memory-mapped I/O yet.
+The top page, `0xFF00`–`0xFFFF`, is memory-mapped I/O, and `0xE000`–`0xEBFF`
+is the framebuffer. See [Memory-mapped I/O](./ch06-00-mmio.md).
 
 ## Instruction formats
 

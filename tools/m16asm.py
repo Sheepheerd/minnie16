@@ -50,6 +50,59 @@ def offset(arg, labels, pc):
     return int(arg, 0)
 
 
+def value(arg, labels):
+    if arg in labels:
+        return labels[arg]
+    return int(arg, 0)
+
+
+def strip_comment(line):
+    quoted = False
+    escaped = False
+    for i, c in enumerate(line):
+        if escaped:
+            escaped = False
+        elif c == "\\" and quoted:
+            escaped = True
+        elif c == '"':
+            quoted = not quoted
+        elif c == ";" and not quoted:
+            return line[:i]
+    return line
+
+
+def split_label(line):
+    head = line.split('"', 1)[0]
+    if ":" not in head:
+        return None, line
+    label, rest = line.split(":", 1)
+    return label.strip(), rest.strip()
+
+
+def string_bytes(text):
+    text = text.strip()
+    if len(text) < 2 or text[0] != '"' or text[-1] != '"':
+        raise ValueError("expected a quoted string")
+    return list(text[1:-1].encode().decode("unicode_escape").encode("latin-1"))
+
+
+def directive(name, rest):
+    if name == ".ASCIZ":
+        return ("bytes", string_bytes(rest) + [0])
+    if name == ".ASCII":
+        return ("bytes", string_bytes(rest))
+    args = rest.replace(",", " ").split()
+    if name == ".BYTE":
+        return ("bytes", args)
+    if name == ".WORD":
+        return ("words", args)
+    if name == ".SPACE":
+        return ("bytes", [0] * int(args[0], 0))
+    if name == ".ALIGN":
+        return ("align", [])
+    raise ValueError("unknown directive " + name)
+
+
 def expand(name, args):
     # turn a pseudo-instruction into real ones, real ones pass through
     if name == "NOP":   # NOP
@@ -63,9 +116,7 @@ def expand(name, args):
     if name == "RET":   # RET
         return [("JALR", ["r0", "r15"])]
     if name == "LI":    # LI rd, imm16
-        v = int(args[1], 0) & 0xFFFF
-        return [("LIL", [args[0], str(v & 0xFF)]),
-                ("LIH", [args[0], str(v >> 8)])]
+        return [("LI_LO", args), ("LI_HI", args)]
     return [(name, args)]
 
 
@@ -73,28 +124,54 @@ def parse(lines):
     # strip comments, pull out labels, give every instruction an address
     labels = {}
     instrs = []
+    data = []
     pc = 0
     for lineno, line in enumerate(lines, 1):
-        line = line.split(";")[0].strip()
-        if ":" in line:
-            label, line = line.split(":", 1)
-            labels[label.strip()] = pc
-            line = line.strip()
+        line = strip_comment(line).strip()
+        label, line = split_label(line)
+        if label is not None and not line.startswith("."):
+            if pc & 1:
+                data.append((lineno, pc, "bytes", [0]))
+                pc += 1
+            labels[label] = pc
+        elif label is not None:
+            labels[label] = pc
         if not line:
             continue
-        parts = line.replace(",", " ").split()
+        parts = line.split(None, 1)
+        name = parts[0].upper()
         try:
-            real = expand(parts[0].upper(), parts[1:])
+            if name.startswith("."):
+                kind, items = directive(name, parts[1] if len(parts) > 1 else "")
+                if kind == "align" or kind == "words":
+                    if pc & 1:
+                        data.append((lineno, pc, "bytes", [0]))
+                        pc += 1
+                    if kind == "align":
+                        continue
+                    if label is not None:
+                        labels[label] = pc
+                data.append((lineno, pc, kind, items))
+                pc += len(items) * (2 if kind == "words" else 1)
+                continue
+            real = expand(name, line.replace(",", " ").split()[1:])
         except (ValueError, IndexError) as e:
             print("line %d: error: %s" % (lineno, e))
             sys.exit(1)
+        if pc & 1:
+            data.append((lineno, pc, "bytes", [0]))
+            pc += 1
         for name, args in real:
             instrs.append((lineno, pc, name, args))
             pc += 2
-    return labels, instrs
+    return labels, instrs, data
 
 
 def encode(name, args, labels, pc):
+    if name == "LI_LO":
+        return OPS["LIL"][0] << 12 | reg(args[0]) << 8 | (value(args[1], labels) & 0xFF)
+    if name == "LI_HI":
+        return OPS["LIH"][0] << 12 | reg(args[0]) << 8 | (value(args[1], labels) >> 8 & 0xFF)
     if name not in OPS:
         raise ValueError("unknown instruction " + name)
     op, fmt, funct = OPS[name]
@@ -134,21 +211,42 @@ def main():
     out = sys.argv[2] if len(sys.argv) > 2 else "program.bin"
 
     with open(sys.argv[1]) as f:
-        labels, instrs = parse(f.readlines())
+        labels, instrs, data = parse(f.readlines())
 
-    words = []
+    image = bytearray()
+
+    def put(addr, b):
+        if len(image) < addr + 1:
+            image.extend(b"\0" * (addr + 1 - len(image)))
+        image[addr] = b & 0xFF
+
     for lineno, pc, name, args in instrs:
         try:
-            words.append(encode(name, args, labels, pc))
+            w = encode(name, args, labels, pc)
         except (KeyError, ValueError, IndexError) as e:
+            print("line %d: error: %s" % (lineno, e))
+            sys.exit(1)
+        put(pc, w)
+        put(pc + 1, w >> 8)
+
+    for lineno, pc, kind, items in data:
+        try:
+            for i, item in enumerate(items):
+                v = item if isinstance(item, int) else value(item, labels)
+                if kind == "words":
+                    put(pc + i * 2, v)
+                    put(pc + i * 2 + 1, v >> 8)
+                else:
+                    put(pc + i, v)
+        except ValueError as e:
             print("line %d: error: %s" % (lineno, e))
             sys.exit(1)
 
     with open(out, "wb") as f:
-        for w in words:
-            f.write(struct.pack("<H", w))
-    print("Wrote %d instructions to %s" % (len(words), out))
-
+        f.write(image)
+    print("Wrote %d instructions and %d bytes of data to %s"
+          % (len(instrs), len(image) - 2 * len(instrs), out))
 
 if __name__ == "__main__":
     main()
+

@@ -89,11 +89,45 @@ it assigns addresses, so labels after them still land in the right place.
 | `RET` | `JALR r0, r15` | 1 |
 | `LI rd, imm16` | `LIL rd, low byte` then `LIH rd, high byte` | 2 |
 
-`LI` always takes two words, even for small values. It only takes a number,
-not a label.
+`LI` always takes two words, even for small values. It takes a number or a
+label, so `LI r1, msg` loads the address of `msg`.
 
 `CALL` uses `JAL`, so the return address goes in `r15`. A subroutine that
 calls another subroutine must save `r15` first.
+
+## Directives
+
+Directives put data into the program image at the current address. A label in
+front of a directive names the address of the data.
+
+| Directive | Emits |
+|-----------|-------|
+| `.byte 1, 2, 0x41` | One byte per value. Labels are allowed and keep the low byte. |
+| `.word 0x1234, label` | One little-endian word per value. Aligned to an even address first. |
+| `.ascii "text"` | The bytes of the string. |
+| `.asciz "text"` | The bytes of the string, then a `0` byte. |
+| `.space 16` | That many `0` bytes. |
+| `.align` | A `0` byte if the address is odd. |
+
+Strings accept the usual escapes, such as `\n`, `\t`, `\"` and `\\`. A `;`
+inside a string is part of the string, not a comment.
+
+Instructions must be word aligned, so if one follows data that ended on an odd
+address, the assembler inserts a `0` byte first. Labels on that line point at
+the instruction, after the padding.
+
+```text
+        LI   r13, 0xFF00
+        LI   r1, msg
+loop:   LB   r2, (r1)
+        BEQZ r2, done
+        SB   r2, (r13)
+        ADDI r1, r1, 1
+        JMP  loop
+done:   HALT
+
+msg:    .asciz "Hello from minnie16!\n"
+```
 
 ## How it works
 
@@ -102,13 +136,14 @@ The assembler makes two passes over the file.
 1. **Parse.** For each line: drop the comment, record the label at the current
    address, split the rest into a mnemonic and operands, and expand any
    pseudo-instruction. Every real instruction gets the next address, 2 bytes
-   apart.
+   apart. Directives reserve as many bytes as their data takes.
 2. **Encode.** For each instruction, look up its opcode and format in the
    `OPS` table, then shift the operand fields into place. All labels are known
-   by now, so forward branches work.
+   by now, so forward branches and `LI` of a later label work. Data values are
+   resolved the same way.
 
-The words are written to the output file in little-endian order, the same as
-`struct.pack("<H", word)`.
+The image is written as raw bytes, with words in little-endian order, the same
+as `struct.pack("<H", word)`.
 
 ## Errors
 
@@ -130,9 +165,7 @@ The assembler is meant to stay small. It does not check:
   for `JAL`).
 - Duplicate or undefined labels. An unknown label name is parsed as a number,
   which fails with a Python `ValueError` message.
+- That data and code don't overlap the framebuffer or the I/O page.
 
 Out-of-range values are masked to fit their field, so they assemble without an
 error but run the wrong instruction.
-
-There are no directives yet, so a program cannot contain data like `.word` or
-strings. Everything is code, starting at address `0x0000`.

@@ -27,7 +27,7 @@
             pkgs.cmake
             pkgs.pkg-config
           ];
-          buildInputs = [ ];
+          buildInputs = [ pkgs.SDL2 ];
 
         };
 
@@ -49,6 +49,7 @@
               clang-tools
               masm
               python3
+              SDL2
               # valgrind
             ];
           };

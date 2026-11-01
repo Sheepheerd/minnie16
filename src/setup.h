@@ -3,6 +3,7 @@
 
 typedef struct {
   int debug;           // Start in the step-through debugger
+  int headless;
   const char *program; // Program image to load
 } OPTIONS;
 
@@ -11,3 +12,4 @@ typedef struct {
 int setup_opts(int argc, char *argv[], OPTIONS *opts);
 
 #endif
+

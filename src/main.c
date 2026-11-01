@@ -4,9 +4,10 @@
 #include <stdio.h>
 
 static void usage(const char *name) {
-  printf("Usage: %s [-d|--debug] [program.bin]\n"
-         "  -d, --debug  start in the step-through debugger\n"
-         "  -h, --help   show this help\n",
+  printf("Usage: %s [-d|--debug] [-n|--headless] [program.bin]\n"
+         "  -d, --debug     start in the step-through debugger\n"
+         "  -n, --headless  never open the graphics window\n"
+         "  -h, --help      show this help\n",
          name);
 }
 
@@ -25,6 +26,7 @@ int main(int argc, char *argv[]) {
   if (sim == NULL) {
     return 1;
   }
+  sim->bus->mmio.headless = opts.headless;
 
   int status = 0;
   if (opts.debug) {
@@ -43,19 +45,24 @@ int main(int argc, char *argv[]) {
 
 int setup_opts(int argc, char *argv[], OPTIONS *opts) {
   opts->debug = 0;
+  opts->headless = 0;
   opts->program = "program.bin";
 
   static struct option long_opts[] = {
       {"debug", no_argument, 0, 'd'},
+      {"headless", no_argument, 0, 'n'},
       {"help", no_argument, 0, 'h'},
       {0, 0, 0, 0},
   };
 
   int opt;
-  while ((opt = getopt_long(argc, argv, "dh", long_opts, NULL)) != -1) {
+  while ((opt = getopt_long(argc, argv, "dnh", long_opts, NULL)) != -1) {
     switch (opt) {
     case 'd':
       opts->debug = 1;
+      break;
+    case 'n':
+      opts->headless = 1;
       break;
     case 'h':
       usage(argv[0]);

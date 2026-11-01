@@ -40,13 +40,14 @@ void sim_free(SIMULATOR *sim) {
   if (sim == NULL) {
     return;
   }
-  free(sim->bus);
+  bus_free(sim->bus);
   free(sim->cpu);
   free(sim);
 }
 
 int sim_reset(SIMULATOR *sim) {
   cpu_reset(sim->cpu);
+  mmio_reset(&sim->bus->mmio);
 
   int loaded = bus_load_program(sim->bus, sim->program);
   if (loaded < 0) {
@@ -75,6 +76,9 @@ SIM_STATUS sim_step(SIMULATOR *sim) {
 
   cpu_step(sim->cpu, sim->bus);
 
+  if (sim->bus->mmio.quit) {
+    sim->cpu->halted = 1;
+  }
   if (sim->cpu->halted) {
     return SIM_HALTED;
   }
@@ -124,7 +128,8 @@ static int parse_reg(const char *s) {
 // Prints one line of disassembly, marking the pc and breakpoints
 static void print_inst(SIMULATOR *sim, uint16_t addr) {
   char text[64];
-  uint16_t raw = bus_read(sim->bus, addr);
+  uint16_t raw = bus_peek8(sim->bus, addr) |
+                 (uint16_t)(bus_peek8(sim->bus, (uint16_t)(addr + 1)) << 8);
   disassemble(raw, addr, text, sizeof(text));
   printf("%s%c 0x%04X:  %04X   %s\n", addr == sim->cpu->pc ? "=>" : "  ",
          find_breakpoint(sim, addr) >= 0 ? '*' : ' ', addr, raw, text);
@@ -265,13 +270,13 @@ static int cmd_mem(SIMULATOR *sim, int argc, char **argv) {
     printf("0x%04X: ", base);
     for (int i = 0; i < 16; i++) {
       if (i < count)
-        printf(" %02X", bus_read8(sim->bus, base + i));
+        printf(" %02X", bus_peek8(sim->bus, base + i));
       else
         printf("   ");
     }
     printf("  ");
     for (int i = 0; i < count; i++) {
-      uint8_t c = bus_read8(sim->bus, base + i);
+      uint8_t c = bus_peek8(sim->bus, base + i);
       putchar(c >= 0x20 && c < 0x7F ? c : '.');
     }
     putchar('\n');
@@ -351,9 +356,12 @@ typedef struct {
 
 static const COMMAND commands[] = {
     {"step", "s", cmd_step, "step [N]           execute N instructions"},
-    {"continue", "c", cmd_continue, "continue           run to a breakpoint or halt"},
-    {"break", "b", cmd_break, "break [ADDR]       set a breakpoint, or list them"},
-    {"delete", "d", cmd_delete, "delete [N]         delete breakpoint N, or all"},
+    {"continue", "c", cmd_continue,
+     "continue           run to a breakpoint or halt"},
+    {"break", "b", cmd_break,
+     "break [ADDR]       set a breakpoint, or list them"},
+    {"delete", "d", cmd_delete,
+     "delete [N]         delete breakpoint N, or all"},
     {"regs", "r", cmd_regs, "regs               show registers"},
     {"mem", "x", cmd_mem, "mem ADDR [LEN]     dump memory"},
     {"disas", "l", cmd_disas, "disas [ADDR] [N]   disassemble N instructions"},
@@ -372,7 +380,8 @@ static int cmd_help(SIMULATOR *sim, int argc, char **argv) {
     printf("  %-3s %s\n", commands[i].alias ? commands[i].alias : "",
            commands[i].help);
   }
-  printf("Numbers can be decimal or hex (0x). Enter repeats the last command.\n");
+  printf(
+      "Numbers can be decimal or hex (0x). Enter repeats the last command.\n");
   return 0;
 }
 
