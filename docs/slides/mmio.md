@@ -211,6 +211,8 @@ python3 tools/m16asm.py programs/hello.asm build/hello.bin >/dev/null
 build/minnie -n build/hello.bin | head -1
 ```
 
+<!-- // output: Hello from minnie16! -->
+
 <!-- pause -->
 
 The program said something without being stopped.
@@ -287,6 +289,8 @@ cmake -B build -S . >/dev/null && cmake --build build >/dev/null
 python3 tools/m16asm.py programs/greet.asm build/greet.bin >/dev/null
 printf 'Shepard\n' | build/minnie -n build/greet.bin | head -1
 ```
+
+<!-- // output: What's your name? Hello, Shepard! -->
 
 <!-- end_slide -->
 
@@ -552,6 +556,8 @@ cmake -B build -S . >/dev/null && cmake --build build >/dev/null
 python3 tools/m16asm.py programs/pong.asm build/pong.bin >/dev/null
 timeout 1 build/minnie -n build/pong.bin | head -1
 ```
+
+<!-- // output: PONG  left: W/S  right: Up/Down  space: serve  esc: quit -->
 
 <!-- end_slide -->
 
