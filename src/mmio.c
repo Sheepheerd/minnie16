@@ -1,8 +1,7 @@
 #include "mmio.h"
 #include "display.h"
-#include <poll.h>
+#include "tty.h"
 #include <stdio.h>
-#include <unistd.h>
 
 #define DISPLAY_SCALE 10
 
@@ -29,17 +28,12 @@ void mmio_free(MMIO *mmio) {
 
 static uint8_t tty_status(MMIO *mmio) {
   if (!mmio->pending && !mmio->eof) {
-    fflush(stdout);
-    struct pollfd pfd = {.fd = STDIN_FILENO, .events = POLLIN};
-    if (poll(&pfd, 1, 0) > 0) {
-      uint8_t c;
-      ssize_t n = read(STDIN_FILENO, &c, 1);
-      if (n == 1) {
-        mmio->buffered = c;
-        mmio->pending = 1;
-      } else {
-        mmio->eof = 1;
-      }
+    int c = tty_getc();
+    if (c >= 0) {
+      mmio->buffered = (uint8_t)c;
+      mmio->pending = 1;
+    } else if (c == TTY_END) {
+      mmio->eof = 1;
     }
   }
   if (mmio->pending)
@@ -93,9 +87,7 @@ uint8_t mmio_read8(MMIO *mmio, const uint8_t *ram, uint16_t addr) {
 void mmio_write8(MMIO *mmio, const uint8_t *ram, uint16_t addr, uint8_t data) {
   switch (addr) {
   case MMIO_TTY_OUT:
-    putchar(data);
-    if (data == '\n')
-      fflush(stdout);
+    tty_putc(data);
     break;
   case MMIO_VID_FLIP:
     vid_flip(mmio, ram);

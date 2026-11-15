@@ -12,6 +12,7 @@ add_library(cpu16 STATIC
   src/simulator.c
   src/debug.c
   src/mmio.c
+  src/tty_posix.c
 )
 target_include_directories(cpu16 PUBLIC src)
 
