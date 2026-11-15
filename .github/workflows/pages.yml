@@ -1,0 +1,44 @@
+name: Web simulator
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: emscripten/emsdk:6.0.9
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the assembler port against m16asm.py
+        run: node web/test/asm.test.js
+      - name: Build
+        run: web/build.sh _site
+      - name: Run the example programs on the build
+        run: node web/test/sim.test.js _site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
