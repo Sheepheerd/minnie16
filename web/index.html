@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>minnie16 simulator</title>
+    <meta
+      name="description"
+      content="Write, assemble and step through minnie16 programs in the browser."
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <h1>minnie16</h1>
+      <label class="pick">
+        Example
+        <select id="examples" disabled>
+          <option value="">Loading</option>
+        </select>
+      </label>
+      <div class="buttons">
+        <button id="assemble" title="Ctrl+Enter" disabled>Assemble</button>
+        <button id="run" class="primary" disabled>Run</button>
+        <button id="step" disabled>Step</button>
+        <button id="reset" disabled>Reset</button>
+        <button id="download" disabled>Download .bin</button>
+      </div>
+      <span id="status" role="status">Loading the emulator</span>
+      <a class="source" href="https://github.com/Sheepheerd/minnie16">GitHub</a>
+    </header>
+
+    <main class="layout">
+      <section class="panel editor-panel">
+        <h2>Program <span id="dirty" hidden>edited, assemble to load it</span></h2>
+        <div class="editor">
+          <div id="gutter" class="gutter" aria-hidden="true"></div>
+          <textarea
+            id="source"
+            wrap="off"
+            spellcheck="false"
+            autocapitalize="off"
+            autocomplete="off"
+            aria-label="Assembly source"
+          ></textarea>
+        </div>
+      </section>
+
+      <div class="column">
+        <section class="panel">
+          <h2>Display <span>click it, then W S ↑ ↓ Space Esc</span></h2>
+          <canvas id="screen" width="64" height="48" tabindex="0" aria-label="Framebuffer"></canvas>
+        </section>
+        <section class="panel console-panel">
+          <h2>Console <button id="clear" class="quiet">Clear</button></h2>
+          <pre id="tty" aria-live="polite"></pre>
+          <input
+            id="ttyin"
+            type="text"
+            spellcheck="false"
+            autocomplete="off"
+            placeholder="Type input, Enter sends the line"
+            aria-label="Console input"
+          />
+        </section>
+      </div>
+
+      <div class="column">
+        <section class="panel">
+          <h2>Registers <span id="counters"></span></h2>
+          <div id="regs" class="regs"></div>
+        </section>
+        <section class="panel">
+          <h2>Disassembly <span>click a line to set a breakpoint</span></h2>
+          <div id="disasm" class="disasm"></div>
+        </section>
+        <section class="panel">
+          <h2>
+            Memory
+            <input id="memaddr" type="text" value="0x0000" spellcheck="false" aria-label="Memory address" />
+          </h2>
+          <pre id="mem" class="mem"></pre>
+        </section>
+      </div>
+    </main>
+
+    <script src="minnie.js"></script>
+    <script src="asm.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

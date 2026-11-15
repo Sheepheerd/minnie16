@@ -50,6 +50,8 @@
               masm
               python3
               SDL2
+              emscripten
+              nodejs
               # valgrind
             ];
           };

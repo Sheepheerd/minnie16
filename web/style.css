@@ -1,0 +1,398 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f4f4f1;
+  --panel: #ffffff;
+  --line: #d9d8d2;
+  --text: #1d1e1c;
+  --muted: #6b6c66;
+  --accent: #b3471d;
+  --accent-text: #ffffff;
+  --mark: #fde9b8;
+  --changed: #b3471d;
+  --error: #b3261e;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #151614;
+    --panel: #1e1f1c;
+    --line: #34352f;
+    --text: #e6e5df;
+    --muted: #9a9b93;
+    --accent: #e8824f;
+    --accent-text: #151614;
+    --mark: #4a3d17;
+    --changed: #f0a070;
+    --error: #f2847c;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.4 var(--sans);
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+h1 {
+  margin: 0;
+  font: 600 16px var(--mono);
+  letter-spacing: -0.02em;
+}
+
+.pick {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+button,
+select,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button,
+select {
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  cursor: pointer;
+}
+
+button:hover:not(:disabled),
+select:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+
+button:disabled,
+select:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button.primary {
+  min-width: 68px;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+button.quiet {
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+#status {
+  flex: 1 1 200px;
+  min-width: 0;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+#status.error {
+  color: var(--error);
+}
+
+.source {
+  color: var(--muted);
+}
+
+.layout {
+  display: grid;
+  gap: 12px;
+  padding: 12px 16px 16px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+h2 span,
+h2 button {
+  margin-left: auto;
+  color: var(--muted);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+h2 input {
+  width: 9ch;
+  margin-left: auto;
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg);
+  font: 13px var(--mono);
+}
+
+/* Editor: a textarea with a line number gutter kept in step by app.js */
+.editor-panel {
+  min-height: 420px;
+}
+
+.editor {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  font: 13px/20px var(--mono);
+}
+
+.gutter {
+  flex: none;
+  min-width: 4ch;
+  padding: 8px 0;
+  overflow: hidden;
+  border-right: 1px solid var(--line);
+  color: var(--muted);
+  text-align: right;
+  user-select: none;
+}
+
+.gutter div {
+  padding: 0 8px 0 10px;
+}
+
+.gutter .pc {
+  background: var(--mark);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.gutter .bad {
+  background: var(--error);
+  color: var(--panel);
+}
+
+#source {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 8px 10px;
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: transparent;
+  font: inherit;
+  tab-size: 8;
+  white-space: pre;
+}
+
+#screen {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #000;
+  image-rendering: pixelated;
+}
+
+.console-panel {
+  flex: 1;
+  min-height: 200px;
+}
+
+#tty {
+  flex: 1 1 140px;
+  min-height: 140px;
+  max-height: 320px;
+  margin: 0;
+  padding: 8px 12px;
+  overflow: auto;
+  font: 13px/1.45 var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+#tty .echo {
+  color: var(--muted);
+}
+
+#tty .err {
+  color: var(--error);
+}
+
+#ttyin {
+  flex: none;
+  padding: 7px 12px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  outline-offset: -2px;
+  background: transparent;
+  font: 13px var(--mono);
+}
+
+.regs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+  padding: 8px 12px;
+  font: 13px/1.6 var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.regs div {
+  display: flex;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.regs .name {
+  width: 3ch;
+  color: var(--muted);
+}
+
+.regs .dec {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.regs .changed .hex {
+  color: var(--changed);
+  font-weight: 600;
+}
+
+.disasm {
+  padding: 4px 0;
+  overflow-x: auto;
+  font: 13px/1.5 var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.disasm.stale {
+  opacity: 0.55;
+}
+
+.disasm .row {
+  display: flex;
+  gap: 12px;
+  padding: 0 12px 0 0;
+  white-space: pre;
+  cursor: pointer;
+}
+
+.disasm .row:hover {
+  background: var(--bg);
+}
+
+.disasm .row.pc {
+  background: var(--mark);
+}
+
+.disasm .bp {
+  flex: none;
+  width: 22px;
+  color: var(--error);
+  text-align: right;
+}
+
+.disasm .addr,
+.disasm .word {
+  color: var(--muted);
+}
+
+.disasm .label {
+  padding-left: 34px;
+  color: var(--accent);
+}
+
+.mem {
+  margin: 0;
+  padding: 8px 12px;
+  overflow-x: auto;
+  font: 12px/1.6 var(--mono);
+}
+
+@media (min-width: 760px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .editor-panel {
+    grid-row: span 2;
+  }
+}
+
+@media (min-width: 1360px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.8fr) 580px;
+    height: calc(100vh - 53px);
+    min-height: 640px;
+  }
+
+  .editor-panel {
+    grid-row: auto;
+    min-height: 0;
+  }
+
+  .column {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  #tty {
+    max-height: none;
+  }
+}
