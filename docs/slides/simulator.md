@@ -170,6 +170,15 @@ python3 tools/m16asm.py programs/example.asm build/example.bin >/dev/null
 build/minnie build/example.bin
 ```
 
+<!-- // output:
+Halted at 0x0012 after 40 instructions
+pc  0x0012   instructions 40   (halted)
+r0  0x0000      0   r1  0x0000      0   r2  0x0037     55   r3  0x0100    256
+r4  0x0000      0   r5  0x0000      0   r6  0x0000      0   r7  0x0000      0
+r8  0x0000      0   r9  0x0000      0   r10 0x0000      0   r11 0x0000      0
+r12 0x0000      0   r13 0x0000      0   r14 0x0000      0   r15 0x0008      8
+-->
+
 <!-- end_slide -->
 
 One table, again
@@ -265,6 +274,25 @@ printf 'disas 0 16\n' | build/minnie -d build/fib.bin |
   sed -n '4,19p' | cut -c 5- | cut -c 1-46
 ```
 
+<!-- // output:
+0x0000:  9100   LIL  r1, 0x00
+0x0002:  A101   LIH  r1, 0x01
+0x0004:  940A   LIL  r4, 0x0A
+0x0006:  A400   LIH  r4, 0x00
+0x0008:  E001   JAL  1            ; -> 0x000C
+0x000A:  F000   HALT
+0x000C:  0200   MOV  r2, r0
+0x000E:  2301   ADDI r3, r0, 1
+0x0010:  8210   SW   r2, 0(r1)
+0x0012:  0523   ADD  r5, r2, r3
+0x0014:  0230   MOV  r2, r3
+0x0016:  0350   MOV  r3, r5
+0x0018:  2112   ADDI r1, r1, 2
+0x001A:  244F   ADDI r4, r4, -1
+0x001C:  C4F9   BNEZ r4, -7       ; -> 0x0010
+0x001E:  D0F0   RET
+-->
+
 <!-- reset_layout -->
 
 <!-- pause -->
@@ -285,6 +313,23 @@ cmake -B build -S . >/dev/null && cmake --build build >/dev/null
 python3 tools/m16asm.py programs/fib.asm build/fib.bin >/dev/null
 printf 'step\nstep\nstep 3\nregs\n' | build/minnie -d build/fib.bin
 ```
+
+<!-- // output:
+Loaded build/fib.bin. Type 'help' for commands.
+=>  0x0000:  9100   LIL  r1, 0x00
+(sim) step
+=>  0x0002:  A101   LIH  r1, 0x01
+(sim) step
+=>  0x0004:  940A   LIL  r4, 0x0A
+(sim) step 3
+=>  0x000C:  0200   MOV  r2, r0
+(sim) regs
+pc  0x000C   instructions 5
+r0  0x0000      0   r1  0x0100    256   r2  0x0000      0   r3  0x0000      0
+r4  0x000A     10   r5  0x0000      0   r6  0x0000      0   r7  0x0000      0
+r8  0x0000      0   r9  0x0000      0   r10 0x0000      0   r11 0x0000      0
+r12 0x0000      0   r13 0x0000      0   r14 0x0000      0   r15 0x000A     10
+-->
 
 <!-- pause -->
 
@@ -331,6 +376,26 @@ python3 tools/m16asm.py programs/fib.asm build/fib.bin >/dev/null
 printf 'break 0x10\ncontinue\ncontinue\ndelete\ncontinue\nmem 0x100 20\n' |
   build/minnie -d build/fib.bin
 ```
+
+<!-- // output:
+Loaded build/fib.bin. Type 'help' for commands.
+=>  0x0000:  9100   LIL  r1, 0x00
+(sim) break 0x10
+Breakpoint 1 at 0x0010
+(sim) continue
+Breakpoint 1 at 0x0010
+=>* 0x0010:  8210   SW   r2, 0(r1)
+(sim) continue
+Breakpoint 1 at 0x0010
+=>* 0x0010:  8210   SW   r2, 0(r1)
+(sim) delete
+Deleted all breakpoints
+(sim) continue
+Halted at 0x000A after 79 instructions
+(sim) mem 0x100 20
+0x0100:  00 00 01 00 01 00 02 00 03 00 05 00 08 00 0D 00  ................
+0x0110:  15 00 22 00                                      ..".
+-->
 
 <!-- pause -->
 
